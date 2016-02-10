@@ -3,9 +3,4 @@
 /platforms
 /plugins
 /node_modules
-/bower_components/*
-!bower_components/nativeDroid2
-!bower_components/jquery-mobile
-!bower_components/toast
-/www/css/*
-/www/js/*
+/www/bower_components/*
