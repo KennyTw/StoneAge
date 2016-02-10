@@ -47,10 +47,7 @@ var app = {
 
         console.log('Received Event: ' + id);
 		
-		  var loc = document.querySelector('geo-location');
-		  loc.addEventListener('geo-response', function(e) {
-			console.log('lat:' + this.latitude, 'lng:' + this.longitude);
-		  });
+		
     }
 };
 

@@ -1,0 +1,56 @@
+<dom-module id="my-map">
+<template>
+    <style>
+        google-map {
+            display: block;
+            height: 100vh;
+        }
+    </style>
+	<geo-location watch-pos latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
+    <google-map latitude="{{latitude}}" longitude="{{longitude}}" zoom="19" >
+        <template is="dom-repeat" items="{{marker}}">
+            <google-map-marker  latitude="{{item.latitudine}}" longitude="{{item.longitudine}}" draggable="true">
+            </google-map-marker>
+        </template>
+    </google-map>
+</template>
+
+<script>
+    Polymer({
+        is: 'my-map',		
+        ready: function() {
+            /*this.marker = [
+                {latitudine: '41.223596', longitudine: '16.296087'},
+                {latitudine: '41.222450', longitudine: '16.291259'}
+            ];*/
+			var self = this;		
+			var loc = document.querySelector('geo-location');
+			loc.addEventListener('geo-response', function(e) {
+				console.log('lat:' + this.latitude, 'lng:' + this.longitude);
+				
+				var markerhere = [];
+				markerhere.push( {latitudine: this.latitude, longitudine: this.longitude} );				
+				self.marker = markerhere;			
+
+				var PUBNUB_demo = PUBNUB.init({
+					publish_key: 'pub-c-a64aace8-4094-495a-8161-fec83351d8c8',
+					subscribe_key: 'sub-c-6ffadd62-cf9e-11e5-b684-02ee2ddab7fe'
+				});				
+				
+				PUBNUB_demo.publish({
+					channel: 'demo_tutorial',
+					message: markerhere
+				});
+				
+				PUBNUB_demo.subscribe({
+					channel: 'demo_tutorial',
+					message: function(m){console.log(m);
+						markerhere.push( {latitudine: m[0].latitudine, longitudine: m[0].longitudine} );
+						var marker = markerhere.slice(0);						
+						self.marker = marker;
+					}
+				});
+			});
+        }
+    });
+</script>
