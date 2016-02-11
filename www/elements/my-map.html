@@ -6,9 +6,9 @@
             height: 100vh;
         }
     </style>
-	<geo-location watch-pos latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
+	<geo-location watch-pos high-accuracy latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
     <google-map latitude="{{latitude}}" longitude="{{longitude}}" zoom="19" >
-        <template is="dom-repeat" items="{{marker}}">
+        <template is="dom-repeat" items="{{_toArray(obj)}}">
             <google-map-marker  latitude="{{item.latitudine}}" longitude="{{item.longitudine}}" draggable="true">
             </google-map-marker>
         </template>
@@ -17,44 +17,108 @@
 
 <script>
     Polymer({
-        is: 'my-map',		
+        is: 'my-map',
+		properties: {
+            obj: Object
+        },
+        _toArray: function(obj) {
+            return Object.keys(obj).map(function(key) {
+                return {
+                    uuid: key,
+                    latitudine: obj[key].latitudine,
+					longitudine: obj[key].longitudine
+                };
+            });
+        },	
         ready: function() {
             /*this.marker = [
                 {latitudine: '41.223596', longitudine: '16.296087'},
                 {latitudine: '41.222450', longitudine: '16.291259'}
             ];*/
-			var markerhere = [];
-			var self = this;	
+			var markerhere = {};
+			var self = this;
+			var pubconnect = false;
+			
+			function sendloc() {				
+				PUBNUB_demo.publish({
+						channel: 'demo_tutorial',
+						message: markerhere
+				});					
+			}			
+				
 			
 			var PUBNUB_demo = PUBNUB.init({
 					publish_key: 'pub-c-a64aace8-4094-495a-8161-fec83351d8c8',
 					subscribe_key: 'sub-c-6ffadd62-cf9e-11e5-b684-02ee2ddab7fe'
-			});	
+			});
 			
-			PUBNUB_demo.subscribe({
-					channel: 'demo_tutorial',
-					message: function(m){console.log(m);
-						markerhere.push( {latitudine: m[0].latitudine, longitudine: m[0].longitudine} );
-						var marker = markerhere.slice(0);						
-						self.marker = marker;
-					}
-			});			
-				
+			if (!localStorage.uuid) {
+				PUBNUB_demo.uuid(function(uuid){
+					localStorage.uuid = uuid;								
+				});	
+			} 
+			
 			var loc = document.querySelector('geo-location');
 			loc.addEventListener('geo-response', function(e) {
-				console.log('lat:' + this.latitude, 'lng:' + this.longitude);
-				
-				
-				markerhere.push( {latitudine: this.latitude, longitudine: this.longitude} );				
-				self.marker = markerhere;						
-				
-				PUBNUB_demo.publish({
+					console.log('uuid:' + localStorage.uuid +   ' lat:' + this.latitude, 'lng:' + this.longitude);					
+					
+					//markerhere.push( {latitudine: this.latitude, longitudine: this.longitude} );
+					markerhere[localStorage.uuid] = {uuid:localStorage.uuid,latitudine: this.latitude, longitudine: this.longitude , changed : true};
+					self.obj = markerhere;						
+					
+					if (pubconnect)
+						sendloc();				
+			});		
+
+			PUBNUB_demo.subscribe({
 					channel: 'demo_tutorial',
-					message: markerhere
-				});
-				
-				
-			});
+					connect: function(){						
+						console.log("Connected");						
+						sendloc();
+						pubconnect = true;},
+					message: function(m){
+						console.log(m);
+						
+						var remap = false;
+						for(var key in m) {
+							if (!markerhere[key]) {
+								remap = true;
+							} else {
+								if (markerhere[key].latitudine != m[key].latitudine ||
+									markerhere[key].longitudine != m[key].longitudine)
+									remap = true;
+							}
+							
+							if (m[key].changed)
+								remap = true;
+								
+							markerhere[key] = {uuid:key,latitudine:m[key].latitudine,longitudine:m[key].longitudine};
+						}
+						
+						var newMap = {};
+						for (var i in markerhere)
+						 newMap[i] = markerhere[i];						 
+						self.obj = newMap;
+						
+						if (remap) {
+							PUBNUB_demo.publish({
+								channel: 'demo_tutorial',
+								message: markerhere
+							});		
+						}
+						
+						//markerhere[m[0].uuid] = {latitudine: m[0].latitudine, longitudine: m[0].longitudine};
+						//markerhere.push( {latitudine: m[0].latitudine, longitudine: m[0].longitudine} );
+						//var marker = markerhere.slice(0);						
+						//self.marker = marker;
+						
+					}
+			});				
+			
+			
+			
+			
+			
         }
     });
 </script>
