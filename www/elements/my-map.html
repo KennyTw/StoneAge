@@ -9,7 +9,7 @@
 	<geo-location watch-pos high-accuracy latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
     <google-map latitude="{{latitude}}" longitude="{{longitude}}" zoom="19" >
         <template is="dom-repeat" items="{{_toArray(obj)}}">
-            <google-map-marker  latitude="{{item.latitudine}}" longitude="{{item.longitudine}}" draggable="true">
+            <google-map-marker  latitude="{{item.latitudine}}" longitude="{{item.longitudine}}" draggable="true" icon="{{item.icon}}">
             </google-map-marker>
         </template>
     </google-map>
@@ -22,11 +22,16 @@
             obj: Object
         },
         _toArray: function(obj) {
-            return Object.keys(obj).map(function(key) {
+            return Object.keys(obj).map(function(key) {	
+				var icon;
+				if (key == localStorage.uuid) {
+					icon = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+				}
                 return {
                     uuid: key,
                     latitudine: obj[key].latitudine,
-					longitudine: obj[key].longitudine
+					longitudine: obj[key].longitudine,
+					icon : icon
                 };
             });
         },	
@@ -39,11 +44,13 @@
 			var self = this;
 			var pubconnect = false;
 			
-			function sendloc() {				
-				PUBNUB_demo.publish({
-						channel: 'demo_tutorial',
-						message: markerhere
-				});					
+			function sendloc() {	
+				if (markerhere) {
+					PUBNUB_demo.publish({
+							channel: 'demo_tutorial',
+							message: markerhere
+					});				
+				}
 			}			
 				
 			
@@ -89,7 +96,7 @@
 									remap = true;
 							}
 							
-							if (m[key].changed)
+							if (m[key].changed && key != localStorage.uuid ) //prevent self loop
 								remap = true;
 								
 							markerhere[key] = {uuid:key,latitudine:m[key].latitudine,longitudine:m[key].longitudine};
