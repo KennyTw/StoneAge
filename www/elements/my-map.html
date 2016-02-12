@@ -28,6 +28,9 @@
 				if (key == localStorage.uuid) {
 					icon = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 				}
+				if ((Date.now() - (new Date(obj[key].timestamp))) /1000/60 > 2 ) { // 5min not update
+					icon = "http://maps.gstatic.com/mapfiles/ridefinder-images/mm_20_gray.png";
+				}
                 return {
                     uuid: key,
                     latitudine: obj[key].latitudine,
@@ -70,8 +73,8 @@
 			loc.addEventListener('geo-response', function(e) {
 					console.log('uuid:' + localStorage.uuid +   ' lat:' + this.latitude, 'lng:' + this.longitude);					
 					
-					//markerhere.push( {latitudine: this.latitude, longitudine: this.longitude} );
-					markerhere[localStorage.uuid] = {uuid:localStorage.uuid,latitudine: this.latitude, longitudine: this.longitude , changed : true};
+					//markerhere.push( {latitudine: this.latitude, longitudine: this.longitude} ); , timestamp : Date.now()
+					markerhere[localStorage.uuid] = {uuid:localStorage.uuid,latitudine: this.latitude, longitudine: this.longitude , changed : true , timestamp : Date.now()};
 					self.obj = markerhere;						
 					
 					if (pubconnect)
@@ -99,8 +102,16 @@
 							
 							//if (m[key].changed && key != localStorage.uuid ) //prevent self loop
 							//	remap = true;
-								
-							markerhere[key] = {uuid:key,latitudine:m[key].latitudine,longitudine:m[key].longitudine};
+							
+							var timestamp;
+							if (m[key].changed) {
+								timestamp = Date.now();
+							}
+							
+							if (!markerhere[key] || 
+							    m[key].latitudine != markerhere[key].latitudine ||
+							    m[key].longitudine != markerhere[key].longitudine)
+								markerhere[key] = {uuid:key,latitudine:m[key].latitudine,longitudine:m[key].longitudine, timestamp:timestamp};
 						}
 						
 						var newMap = {};
