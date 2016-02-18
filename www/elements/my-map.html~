@@ -6,14 +6,14 @@
             height: 100vh;			
         }
     </style>
-    <geo-location watch-pos high-accuracy latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
-    <google-map apiKey="AIzaSyDMO_Fj2tNcs4qt8zczIZL3Xgh-etRCx3g" latitude="{{latitude}}" longitude="{{longitude}}" zoom="19" >
+	<geo-location watch-pos high-accuracy latitude="{{latitude}}" longitude="{{longitude}}"></geo-location>
+    <!--<google-map apiKey="AIzaSyDMO_Fj2tNcs4qt8zczIZL3Xgh-etRCx3g" latitude="{{latitude}}" longitude="{{longitude}}" zoom="19" >
         <template is="dom-repeat" items="{{_toArray(obj)}}">
             <google-map-marker  latitude="{{item.latitudine}}" longitude="{{item.longitudine}}" draggable="true" icon="{{item.icon}}">
             <span>{{item.uuid}}</span>
-	    </google-map-marker>
+			</google-map-marker>
         </template>
-    </google-map>
+    </google-map>-->
 </template>
 
 <script>
